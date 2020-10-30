@@ -24,14 +24,14 @@ class ProfileDetail(APIView):
             users = User.objects.filter(inn__in=inns)
             if users:
                 # проверка что введенные ИНН есть в базе
-                if users.count != len(inns):
+                if users.count() != len(inns):
                     msg = 'Не все введенные ИНН есть в базе'
-                    JsonResponse(status=200, data={'msg': msg})
+                    return JsonResponse(status=200, data={'msg': msg})
                 summa = serializer.validated_data.get('summa')
                 summa_for_user =  summa / users.count()
                 if not user.get_money(summa):
                     msg = 'Не корректная сумма или недостаточно средств у пользователя'
-                    JsonResponse(status=200, data={'msg': msg})
+                    return JsonResponse(status=200, data={'msg': msg})
                 for user_for_refill in users:
                     user_for_refill.add_money(summa=summa_for_user)
                 msg = 'Средства распределены'
