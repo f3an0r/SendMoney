@@ -18,6 +18,7 @@ class ProfileDetail(APIView):
     def post(self, request):
         serializer = DistributionMoneyFormSerializer(data=request.data)
         msg = ''
+        response = None
         if serializer.is_valid():
             inns = serializer.validated_data.get("inn")
             user = User.objects.get(id=serializer.validated_data.get('users'))
@@ -26,17 +27,20 @@ class ProfileDetail(APIView):
                 # проверка что введенные ИНН есть в базе
                 if users.count() != len(inns):
                     msg = 'Не все введенные ИНН есть в базе'
-                    return JsonResponse(status=200, data={'msg': msg})
+                    return JsonResponse(status=200, data={'error_code': 101, 'msg': msg})
                 summa = serializer.validated_data.get('summa')
                 summa_for_user =  summa / users.count()
                 if not user.get_money(summa):
                     msg = 'Не корректная сумма или недостаточно средств у пользователя'
-                    return JsonResponse(status=200, data={'msg': msg})
+                    return JsonResponse(status=200, data={'error_code': 102, 'msg': msg})
                 for user_for_refill in users:
                     user_for_refill.add_money(summa=summa_for_user)
                 msg = 'Средства распределены'
+                response = {'error_code': 0, 'msg': msg}
             else:
-                msg = 'Нет поьзователей с введеными inn'
+                msg = 'Нет пользователей с введеными inn'
+                response = {'error_code': 104, 'msg': msg}
         else:
             msg = 'Введены некорректные данные'
-        return JsonResponse(status=200, data={'msg': msg})
+            response = {'error_code': 105, 'msg': msg}
+        return JsonResponse(status=200, data=response)
